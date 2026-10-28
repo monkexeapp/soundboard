@@ -104,14 +104,14 @@
 <script>
 // ====== A MODIFIER : tes noms de fichiers ======
 const CONFIG = {
-  horlogeDebut: null,
+  horlogeDebut: 'sounds/MANCHES.m4a',
   horlogeFin:   'sounds/FIN MANCHE.m4a',
   sonPorte:     'sounds/ENTREE.m4a',
-  boucle: false,
+  boucle: true,
   manches: [
-    { nom: 'Manche 1', ambiances: ['sounds/MANCHES.m4a'] },
-    { nom: 'Manche 2', ambiances: ['sounds/MANCHES.m4a'] },
-    { nom: 'Manche 3', ambiances: ['sounds/MANCHES.m4a'] }
+    { nom: 'Manche 1', ambiances: ['sounds/BOUCLE MANCHES.m4a'] },
+    { nom: 'Manche 2', ambiances: ['sounds/BOUCLE MANCHES.m4a'] },
+    { nom: 'Manche 3', ambiances: ['sounds/BOUCLE MANCHES.m4a'] }
   ],
   pads: [
     { nom: "Bruit stridant 01", fichier: 'sounds/PAD 01.m4a' },
@@ -139,12 +139,13 @@ async function load(url) {
   return cache[url];
 }
 
-async function play(url, onended) {
+async function play(url, onended, loop) {
   try {
     const buf = await load(url);
     const s = ctx.createBufferSource();
     s.buffer = buf;
     s.connect(ctx.destination);
+    if (loop) s.loop = true;
     if (onended) s.onended = onended;
     s.start();
     return s;
@@ -166,7 +167,8 @@ async function demarrer(i, btn) {
   const amb = CONFIG.manches[i].ambiances;
   const jouerAmb = async (k) => {
     if (t !== token || !amb.length || (!CONFIG.boucle && k >= amb.length)) return;
-    const s = await play(amb[k % amb.length], () => jouerAmb(k + 1));
+    const seul = CONFIG.boucle && amb.length === 1;
+    const s = await play(amb[k % amb.length], seul ? null : () => jouerAmb(k + 1), seul);
     if (s) { if (t !== token) { s.onended = null; s.stop(); } else sources.push(s); }
   };
   if (!CONFIG.horlogeDebut) { jouerAmb(0); return; }
