@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a1a15">
+<title>Pads</title>
+<style>
+  :root { --acc:#1fe08a; --card:#1b2421; --card2:rgba(255,255,255,.11); --line:rgba(255,255,255,.2); --dim:rgba(255,255,255,.45); --red:#ff5a62; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
+  html,body { margin:0; min-height:100%; }
+  body {
+    color:#fff; font-family:-apple-system,"SF Pro Display",Inter,system-ui,sans-serif; overflow-x:hidden;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(31,224,138,.16), transparent 60%),
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px) 0 0/28px 28px,
+      #0a1a15;
+    background-attachment:fixed;
+    padding:calc(env(safe-area-inset-top,0px) + 60px) 16px calc(env(safe-area-inset-bottom,0px) + 90px);
+  }
+  .wrap { max-width:520px; margin:0 auto; }
+  .mono { font-family:ui-monospace,"SF Mono",Menlo,monospace; }
+
+  .top { display:flex; justify-content:space-between; align-items:center; margin:0 2px 18px; }
+  .top b { font-size:20px; letter-spacing:.02em; }
+  .tag { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--acc); border:1px solid rgba(31,224,138,.4);
+         background:rgba(31,224,138,.08); padding:6px 10px; border-radius:8px; }
+  .tag::before { content:""; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--acc); margin-right:7px; box-shadow:0 0 8px var(--acc); }
+
+  h2 { font-size:11px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); margin:24px 4px 10px; }
+
+  button { font:inherit; color:#fff; cursor:pointer; border:1px solid var(--line); background:rgba(255,255,255,.10); box-shadow:0 4px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.18); border-radius:18px;
+           transition:transform .12s ease, opacity .25s ease, background .25s ease, border-color .25s ease; }
+  button:active { transform:scale(.97); }
+
+  .arrivee { width:100%; padding:18px; text-align:left; display:flex; justify-content:space-between; align-items:center;
+             border-color:rgba(31,224,138,.6); background:linear-gradient(135deg,rgba(31,224,138,.22),rgba(255,255,255,.10) 70%); }
+  .arrivee small, .pad small { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--acc); }
+  .arrivee span.t { display:block; font-size:16px; font-weight:600; margin-top:5px; }
+  .arrivee .ic { width:38px; height:38px; border-radius:12px; border:1px solid rgba(31,224,138,.5); display:grid; place-items:center; color:var(--acc); font-size:18px; }
+
+  .manche { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .manche.solo { grid-template-columns:1fr; }
+  .go, .stop { padding:20px 10px; font-size:15px; font-weight:600; }
+  .go, .stop { background:var(--acc); color:#05160e; border:0; box-shadow:0 6px 20px rgba(31,224,138,.28); }
+  .stop { background:#a8f5cf; box-shadow:0 6px 20px rgba(168,245,207,.25); }
+  .go.active { box-shadow:0 0 0 3px #fff, 0 0 26px rgba(31,224,138,.7); }
+
+  .pads { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .pad { min-height:112px; padding:12px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; background:var(--card2); }
+  .pad .t2 { display:flex; justify-content:space-between; align-items:flex-start; width:100%; }
+  .pad .cpt { font-size:15px; font-weight:700; color:var(--acc); }
+  .pad.playing .cpt { color:#05160e; }
+  .pad.used .cpt { color:var(--dim); }
+  .pad .n { font-size:22px; font-weight:700; color:rgba(255,255,255,.7); }
+  .pad .nm { font-size:15px; font-weight:600; line-height:1.2; display:inline-block; margin-bottom:4px; }
+  .pad small::before { content:"PRÊT"; }
+
+  .pad.half { background:rgba(255,255,255,.22); border-color:rgba(255,255,255,.45); }
+  .pad.half .cpt, .pad.half small { color:rgba(255,255,255,.8); }
+  .pad.half small::before { content:"DÉJÀ UTILISÉ"; }
+  .pad.playing { background:var(--acc); border-color:var(--acc); color:#05160e; box-shadow:0 0 26px rgba(31,224,138,.6); }
+  .pad.playing .n, .pad.playing small { color:#05160e; }
+  .pad.playing small::before { content:"EN COURS"; }
+  .used { opacity:.45; filter:grayscale(1); border-color:var(--line) !important; background:rgba(255,255,255,.03) !important; box-shadow:none !important; }
+  .pad.used small::before { content:"UTILISÉ"; }
+  .pad.used small { color:var(--dim); }
+  .go.used, .stop.used { color:rgba(255,255,255,.55); border:1px solid var(--line); }
+  .arrivee.used .ic { color:var(--dim); border-color:var(--line); }
+  .arrivee.used small { color:var(--dim); }
+
+  .reset { width:100%; margin-top:22px; padding:17px; font-size:14px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+           background:rgba(255,255,255,.10); color:var(--acc); border:1px solid rgba(31,224,138,.6); }
+
+  .reset.mini { position:fixed; right:16px; bottom:calc(env(safe-area-inset-bottom,0px) + 16px); z-index:5; margin:0;
+                width:42px; height:42px; padding:0; border-radius:50%;
+                font-size:20px; line-height:1; letter-spacing:0; opacity:.75; }
+  .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:24px; z-index:10;
+           background:rgba(3,10,8,.7); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .modal.show { display:flex; }
+  .box { width:100%; max-width:320px; background:var(--card); border:1px solid rgba(31,224,138,.35); border-radius:22px; padding:24px 18px 18px; text-align:center; }
+  .box p { margin:0 0 20px; font-size:19px; font-weight:600; }
+  .box .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .box button { padding:15px 8px; font-weight:600; }
+  .box .oui { background:var(--acc); color:#05160e; border:0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><b>Pads</b></div>
+
+  <div class="pads" id="pads"></div>
+
+  <button class="reset mini" id="reset" aria-label="Réinitialiser">↻</button>
+</div>
+
+<script>
+// ====== A MODIFIER : tes noms de fichiers ======
+const CONFIG = {
+  pads: [
+    { nom: "Bruit stridant 01", fichier: 'sounds/PAD 01.m4a' },
+    { nom: "Bruit stridant 02", fichier: 'sounds/PAD 02.m4a' },
+    { nom: "Porte", fichier: 'sounds/PAD 03.m4a' },
+    { nom: "Cri monstre 01", fichier: 'sounds/PAD 04.m4a' },
+    { nom: "Cri monstre 02", fichier: 'sounds/PAD 05.m4a' },
+    { nom: "Rire démoniaque", fichier: 'sounds/PAD 06.m4a' },
+    { nom: "Cri d'effroi", fichier: 'sounds/PAD 07.m4a' },
+    { nom: "Sonnerie téléphone", fichier: 'sounds/PAD 08.m4a' },
+    { nom: "Pleurs d'enfant", fichier: 'sounds/PAD 09.m4a' }
+  ]
+};
+// ===============================================
+
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const cache = {};
+let token = 0, sources = [];
+
+async function load(url) {
+  if (!cache[url]) {
+    const r = await fetch(url);
+    cache[url] = await ctx.decodeAudioData(await r.arrayBuffer());
+  }
+  return cache[url];
+}
+
+async function play(url, onended, loop, vol) {
+  try {
+    const buf = await load(url);
+    const s = ctx.createBufferSource();
+    s.buffer = buf;
+    const g = ctx.createGain();
+    g.gain.value = vol || 1;
+    s.connect(g);
+    g.connect(ctx.destination);
+    if (loop) s.loop = true;
+    if (onended) s.onended = onended;
+    s.start();
+    return s;
+  } catch (e) { console.warn('Son introuvable :', url); }
+}
+
+let resetId = 0;
+const MAX = 2; // nombre d'utilisations par pad
+const pDiv = document.getElementById('pads');
+CONFIG.pads.forEach((p, i) => {
+  const b = document.createElement('button');
+  b.className = 'pad';
+  b.innerHTML = '<div class="t2"><span class="n mono">' + String(i + 1).padStart(2, '0') + '</span>' +
+                '<span class="cpt mono"></span></div>' +
+                '<div><span class="nm">' + p.nom + '</span><br><small class="mono"></small></div>';
+  const cpt = b.querySelector('.cpt');
+  let left = MAX;
+  const maj = () => { cpt.textContent = left + '/' + MAX; };
+  maj();
+  b.resetPad = () => { left = MAX; maj(); };
+  b.onclick = async () => {
+    if (left <= 0 || b.classList.contains('playing')) return;
+    const id = resetId;
+    left--; maj();
+    b.classList.remove('half');
+    b.classList.add('playing');
+    await ctx.resume();
+    const fini = () => {
+      if (id !== resetId) return;
+      b.classList.remove('playing');
+      if (left <= 0) b.classList.add('used');
+      else if (left < MAX) b.classList.add('half');
+    };
+    const src = await play(p.fichier, fini);
+    if (!src) fini();
+  };
+  pDiv.append(b);
+});
+
+document.getElementById('reset').onclick = () => {
+  resetId++;
+  document.querySelectorAll('.pad').forEach(b => { b.resetPad(); b.classList.remove('used', 'playing', 'half'); });
+};
+</script>
+</body>
+</html>
